@@ -1,0 +1,21 @@
+\section{Introduction}
+Every software project has a channel through which stakeholders raise feature requests (FRs) and bug reports (BRs). Far fewer have a working \emph{loop}: an item that is registered, acknowledged, acted upon, and whose outcome is reported back to the person who raised it. In the author's experience across two decades of projects, the failure is seldom at capture---forms, mail, tickets and trackers abound---but in the interval that follows. Items wait for a triage meeting, for a developer with capacity, for a decision; the requester hears nothing; and because that interval is unmeasured, its cost is invisible.
+
+Two things have changed. First, the tooling that small teams already use---a Git host with an issue tracker, a serverless function, a mail API---is enough to record every stage of a feedback item as a timestamp, which makes response behaviour measurable for free. Second, AI coding agents can now read an issue, change code, run tests and open a pull request unattended. This makes it realistic to \emph{assign the Respond stage to an agent by default} and to reserve human effort for review, acceptance and merge.
+
+The Fast Feedback Resolution System (\ffrs) is the author's synthesis of these two observations into a small, prescriptive model: a pipeline with five stages---capture, acknowledge, route, respond, close---four timestamp-derived metrics, and one structural rule: the Respond stage is performed by a scheduled agent, with two paths. For items that require a code change, the agent produces a complete pull request---the fix, the tests it ran, and the evidence---for a developer to review and merge. For items that do not, the agent proposes a solution; the proposal is executed only after the \emph{requester} accepts it and a \emph{reviewer} confirms it. The loop closes when the outcome is recorded and reported back.
+
+\subsection{Contributions}
+\begin{enumerate}
+  \item \textbf{The \ffrs{} model} (Sec.~\ref{sec:model}): stages, the two-path agentic Respond stage with its human checkpoints, and metrics defined purely from timestamps.
+  \item \textbf{A tool-agnostic reference architecture} (Sec.~\ref{sec:arch}) defined by roles and contracts---tracker, function, object store, mail, bot check, coding agent---in which the project's existing issue tracker serves as the system of record, so that anyone with read access can recompute all metrics and each role can be filled by any equivalent product.
+  \item \textbf{An open implementation} (Sec.~\ref{sec:impl}): a 4\,KB widget, one serverless function, and a scheduled agent, live on scaledaiops.org.
+  \item \textbf{An evaluation} (Sec.~\ref{sec:eval}) on two sites against a pre-registered protocol, and an analysis of which parts of the design are load-bearing.
+\end{enumerate}
+
+\subsection{Research questions}
+\begin{itemize}
+  \item \textbf{RQ1} Can the \ffrs{} model, including the agentic Respond stage, be implemented for a small project with no database and no third-party feedback vendor, and what does it cost to build and run?
+  \item \textbf{RQ2} What response and closure behaviour does it produce in practice---time to first response, time to close, loop closure, signal ratio, and the share of items resolved by an agent-authored pull request?
+  \item \textbf{RQ3} Which parts of the design are load-bearing for those outcomes, and which could be removed?
+\end{itemize}

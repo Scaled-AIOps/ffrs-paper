@@ -1,0 +1,31 @@
+\section{Implementation}\label{sec:impl}
+Table~\ref{tab:impl} summarises the reference implementation---one instantiation of the roles in Table~\ref{tab:roles}, chosen because the project already ran on that cloud and that code host. All artefacts are public; commit hashes pin the versions evaluated. Everything product-specific is confined to two adapters (tracker, object store), the mail sender, and the deployment module; the domain logic, guards, widget and metrics do not depend on the products named here.
+
+\begin{table}[t]
+\centering\footnotesize
+\caption{Reference implementation (2026-08-18).}
+\label{tab:impl}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{5.4cm}@{}}
+\toprule
+API (\texttt{ffrs-api}) & Node~22 Lambda, TypeScript strict, Zod at every boundary; 24 files, $\approx$900 LOC, 32 tests (in-memory tracker/store twins, no network); 414\,KB bundle \\
+Widget & 10.9\,KB (4.1\,KB gz) + 5.8\,KB CSS; no framework; screenshot library loaded on click \\
+Infrastructure & Terraform module, 19 resources (function, API gateway, private bucket, mail identity, weekly rule, CDN behaviour); \texttt{enable\_ffrs=false} plan is a verified no-op \\
+Store & GitHub issue + one JSON sidecar per item; 0 tables \\
+Agent & hosted coding-agent routine, hourly; $\approx$700-word versioned prompt \\
+Build effort & $\approx$1 working day across 8 phases (commit timeline in the repositories) \\
+Run cost & within AWS free tier at the reference volume \todo{confirm after 4 weeks} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Engineering standards} TypeScript strict with schema validation at every boundary; persistence behind two ports with in-memory twins so the test suite needs no network; structured logs keyed by the item's reference; formatting and validation before every infrastructure commit; small, single-purpose commits with imperative messages so the history reads as a change log. Infrastructure as code and GitOps are applied uniformly, making the audit trail in Sec.~\ref{sec:arch} complete rather than partial.
+
+\paragraph{Embedding contract} A site adopts \ffrs{} with one tag:
+\begin{lstlisting}
+<script src="/assets/js/ffrs-widget.js"
+  data-endpoint="/api/feedback" data-site="example.org"
+  data-turnstile="<sitekey>" data-screenshot="bug" defer></script>
+\end{lstlisting}
+and a function deployment configured by environment variables (tracker repository, mail sender, bucket). Everything site-specific is an attribute or a variable.
+
+\paragraph{Reproducing the metrics} \texttt{npm run metrics} and \texttt{npm run export} in \texttt{ffrs-api} read the public tracker and emit per-week metrics and anonymised per-item rows (no body, e-mail or screenshot). The CSVs used in Sec.~\ref{sec:eval} are committed under \texttt{data/} in the paper repository.

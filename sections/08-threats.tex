@@ -1,0 +1,15 @@
+\section{Threats to Validity}\label{sec:threats}
+\paragraph{Internal validity}
+The maintainer of the reference site is also the author of this paper and the reviewer in the loop; time to first human decision (TTHR) and time to close are therefore likely flattering relative to a project whose maintainers did not build the system. We mitigate by pre-registering targets and the measurement protocol before data collection, by reporting per-item timelines rather than only aggregates, and by excluding items we filed ourselves to test the system (labelled \texttt{spam} in the public tracker, visible to anyone). The agent's own responses are posted under the maintainer's tracker identity; we distinguish them by a fixed marker so that TTHR counts only human comments, and we report TTFR (agent or human) separately.
+
+\paragraph{External validity}
+The evaluation covers one small, niche, non-commercial site plus aggregate figures from one independent commercial deployment; feedback volume is low, so all rates are reported with $n$ and no inferential statistics are claimed. The reference implementation targets one tracker and one cloud provider; the model depends on neither (Table~\ref{tab:roles}), and the tracker sits behind a two-method port, but a second adapter has not been built and exercised. Results for larger teams, higher volumes or regulated domains are out of scope.
+
+\paragraph{Construct validity}
+``Respond'' is operationalised as the first comment or pull request on the item, which may be a question or an incorrect attempt rather than an answer; ``close'' is the tracker's close event with an inferred outcome, which measures that a decision was recorded, not that the requester was satisfied. Loop closure is a system property (a closing notification was sent) and not a satisfaction measure. Signal ratio depends on maintainers labelling spam consistently. Agent share counts merged agent pull requests and executed proposals; it says nothing about the effort a reviewer spent correcting them, which we report qualitatively only.
+
+\paragraph{Reliability}
+All metrics are recomputable by anyone with read access to the public tracker using the published tooling; the CSV exports used in this paper are committed with their export dates. The dependence on the tracker cuts both ways: an outage or a change in the tracker's API affects capture (an explicit \texttt{502} and client retry) and measurement, and comment timestamps are the tracker's, not ours.
+
+\paragraph{Ethical considerations}
+Personal data is limited to an optional e-mail stored with explicit consent, apart from the public record, and deletable; screenshots may capture on-screen content and are therefore private and expiring; the agent never acts on production without a human decision, and every action it takes is visible in the public tracker.

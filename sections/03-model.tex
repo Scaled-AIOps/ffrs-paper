@@ -1,0 +1,113 @@
+\section{The \ffrs{} Model}\label{sec:model}
+\subsection{Stages}
+The \ffrs{} model treats feedback as a five-stage pipeline (Fig.~\ref{fig:pipeline}). Each stage is a single timestamp, recorded by the system that naturally owns the event (Table~\ref{tab:stages}); \ffrs{} prescribes no additional bookkeeping.
+
+\begin{figure}[h]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}[
+  font=\footnotesize, node distance=4mm,
+  stage/.style={draw, rectangle, rounded corners=2pt, inner sep=4pt, align=center, minimum height=8mm, fill=black!5},
+  arr/.style={-{Latex[length=1.5mm]}, thick}
+]
+  \node[stage] (cap) {\textbf{Capture}};
+  \node[stage, right=of cap] (ack) {\textbf{Acknowledge}};
+  \node[stage, right=of ack] (rte) {\textbf{Route}};
+  \node[stage, right=of rte, fill=blue!8] (rsp) {\textbf{Respond}};
+  \node[stage, right=of rsp] (cls) {\textbf{Close}};
+  
+  \draw[arr] (cap) -- (ack);
+  \draw[arr] (ack) -- (rte);
+  \draw[arr] (rte) -- (rsp);
+  \draw[arr] (rsp) -- (cls);
+\end{tikzpicture}%
+}
+\vspace{-2mm}
+\caption{The five-stage \ffrs{} pipeline. The \emph{Respond} stage is agentic by default.}
+\label{fig:pipeline}
+\end{figure}
+
+\begin{table}[t]
+\centering\footnotesize
+\caption{\ffrs{} stages. ``Owner'' is the system whose clock records the timestamp.}
+\label{tab:stages}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{2.6cm}@{}}
+\toprule
+Stage & Definition & Owner / timestamp \\
+\midrule
+Capture & The item exists durably with a public reference id & tracker: issue created \\
+Acknowledge & Requester is told it was received (only if they asked to be) & mail: ack sent \\
+Route & Item is in the working tool with kind/severity labels & tracker (may equal Capture) \\
+Respond & First substantive response: an agent PR or proposal, or a human comment & tracker: first comment / PR \\
+Close & Outcome recorded and reported to the requester & tracker: closed; mail: closing note \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The agentic Respond stage}
+Respond is performed by a scheduled agent that reads every open item not yet responded to. It follows one of two paths (Fig.~\ref{fig:paths}):
+
+\paragraph{Code path} If the item implies a code or content change the agent can make, it produces a \emph{complete pull request}: the change, the tests it wrote or ran, their results, and a link back to the item. A developer reviews and merges (or rejects with a reason). Merge closes the item with outcome \emph{fixed} or \emph{shipped}.
+
+\paragraph{Proposal path} Otherwise the agent posts a \emph{proposal}: what it would do, what it needs, and any risk. Two human checkpoints follow: the \emph{requester} accepts (the proposal solves their problem) and a \emph{reviewer} confirms (it is safe and appropriate for the project). Only then does the agent execute and close the item; a rejection at either checkpoint returns it to the human queue. If the requester does not respond within a staleness timeout (e.g., 14 days), the item is automatically closed to prevent unbounded queue growth.
+
+The rule that makes \ffrs{} ``fast'' is that the first substantive response is produced without waiting for a maintainer, and that maintainer effort is spent on judgement rather than production. The rule that keeps it safe is that nothing the agent produces takes effect without a human decision: merge, or accept-and-confirm.
+
+\begin{figure}[t]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}[
+  font=\scriptsize, node distance=3.5mm and 6mm,
+  box/.style={draw, rounded corners=1pt, minimum height=6mm, minimum width=22mm, inner sep=2pt, align=center},
+  agent/.style={box, fill=blue!8}, human/.style={box, fill=orange!12}, sys/.style={box, fill=black!5},
+  dec/.style={diamond, draw, aspect=2.4, inner sep=1pt, align=center, fill=blue!8},
+  arr/.style={-{Latex[length=1.6mm]}}, rej/.style={arr, dashed}]
+  \node[sys] (item) {Item (captured, routed)};
+  \node[dec, below=of item] (tri) {agent triage};
+  \node[agent, below left=6mm and 2mm of tri] (pr) {Pull request\\fix $\cdot$ tests $\cdot$ evidence};
+  \node[human, below=of pr] (rev) {Developer reviews};
+  \node[sys, below=of rev] (merge) {Merge};
+  \node[agent, below right=6mm and 2mm of tri] (prop) {Proposal\\what $\cdot$ needs $\cdot$ risk};
+  \node[human, below=of prop] (acc) {Requester \texttt{/accept}};
+  \node[human, below=of acc] (conf) {Reviewer \texttt{/confirm}};
+  \node[agent, below=of conf] (exec) {Agent executes};
+  \node[sys, below=8mm of $(merge.south)!0.5!(exec.south)$] (close) {Close: outcome recorded, requester notified};
+  \node[human, left=10mm of close, minimum width=20mm] (queue) {Human queue};
+  \draw[arr] (item) -- (tri);
+  \draw[arr] (tri) -| node[pos=0.25, above, font=\tiny]{code / content} (pr);
+  \draw[arr] (tri) -| node[pos=0.25, above, font=\tiny]{decision / outside repo} (prop);
+  \draw[arr] (pr) -- (rev); \draw[arr] (rev) -- (merge);
+  \draw[arr] (prop) -- (acc); \draw[arr] (acc) -- (conf); \draw[arr] (conf) -- (exec);
+  \draw[arr] (merge) -- (close.north -| merge); \draw[arr] (exec) -- (close.north -| exec);
+  \draw[rej] (rev.west) -| node[pos=0.75, left, font=\tiny]{reject} (queue.north);
+  \draw[rej] (conf.east) -- ++(4mm,0) |- ($(queue.south)+(0,-3mm)$) node[pos=0.75, below, font=\tiny]{\texttt{/reject}} -- (queue.south);
+\end{tikzpicture}}
+\caption{The agentic Respond stage. Blue: produced by the agent; orange: human decisions; grey: system events. Nothing the agent produces takes effect without a merge or an accept-and-confirm.}
+\label{fig:paths}
+\end{figure}
+
+\subsection{Metrics Formalization}
+Let $\mathcal{I}$ be the set of feedback items in a given reporting window, partitioned by kind. For each item $i \in \mathcal{I}$, the pipeline records a tuple of monotonically increasing timestamps $\langle t_{\text{cap}}(i), t_{\text{ack}}(i), t_{\text{route}}(i), t_{\text{resp}}(i), t_{\text{close}}(i) \rangle$. For agent-driven systems, we additionally record $t_{\text{human}}(i)$, the timestamp of the first human decision.
+
+All duration metrics are derived directly from these timestamps:
+\begin{align}
+  \text{TTFR}(i) &= t_{\text{resp}}(i) - t_{\text{cap}}(i) \\
+  \text{TTHR}(i) &= t_{\text{human}}(i) - t_{\text{cap}}(i) \\
+  \text{TTC}(i) &= t_{\text{close}}(i) - t_{\text{cap}}(i)
+\end{align}
+Aggregates are reported as p50 and p90. Systemic rates are defined as follows, where $\mathcal{I}_{\text{closed}}$ is the subset of items that reached the Close stage:
+\begin{align}
+  \text{Loop Closure} &= \frac{|\mathcal{I}_{\text{closed}}|}{|\mathcal{I}|} \\
+  \text{Signal Ratio} &= 1 - \frac{|\mathcal{I}_{\text{spam}} \cup \mathcal{I}_{\text{dup}}|}{|\mathcal{I}|} \\
+  \text{Agent Share} &= \frac{|\mathcal{I}_{\text{agent\_merged}} \cup \mathcal{I}_{\text{agent\_exec}}|}{|\mathcal{I}_{\text{closed}}|}
+\end{align}
+For items whose requesters opted in, we track the \emph{consented notification rate} as the share for which the closing note was successfully sent. These definitions are deliberate analogues of flow metrics~\cite{forsgren2018accelerate} and service-desk targets~\cite{axelos2019itil}, reduced to what the system's timeline can witness.
+
+\subsection{Design principles}
+\begin{enumerate}
+  \item \emph{Durable first.} The item exists in the tracker before any notification or agent action.
+  \item \emph{Automate everything but judgement.} Ack, route, first response and closing notification are code; merge, accept and confirm are people.
+  \item \emph{Measure timestamps, not opinions.} No status field is hand-maintained; metrics are recomputable by anyone with read access to the tracker.
+  \item \emph{Responsible by default.} Personal data only with consent, stored apart from the public record, deletable; the agent never acts on production without a human checkpoint.
+  \item \emph{Everything through version control.} Infrastructure as code and GitOps for every layer---site content, widget, function, cloud resources, the agent's own instructions---so that each change, human or agent, is a reviewed commit and the audit trail is the commit log.
+\end{enumerate}

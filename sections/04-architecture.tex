@@ -1,0 +1,71 @@
+\section{Reference Architecture}\label{sec:arch}
+Fig.~\ref{fig:arch} shows the reference architecture in terms of \emph{roles}; Table~\ref{tab:roles} lists, for each role, the component used in the reference deployment and equivalent alternatives. \ffrs{} prescribes the roles and the contracts between them, not the products: any tracker with issues, comments, labels and webhooks; any function-as-a-service runtime; any object store; any transactional mail API; any bot check; any coding agent that can open a pull request. The guiding constraint was that a small project should add \emph{no} new system of record: the issue tracker it already uses \emph{is} the store.
+
+\begin{table}[t]
+\centering\footnotesize
+\caption{Roles in the reference architecture, the component used in the reference deployment, and equivalents that satisfy the same contract.}
+\label{tab:roles}
+\begin{tabular}{@{}p{2.4cm}>{\raggedright\arraybackslash}p{2.1cm}>{\raggedright\arraybackslash}p{3.3cm}@{}}
+\toprule
+Role & Reference & Equivalents \\
+\midrule
+Issue tracker (system of record) & GitHub Issues & Jira, GitLab Issues, Linear, Azure Boards, Gitea \\
+Capture function & AWS Lambda + API Gateway & Google Cloud Run / Functions, Azure Functions, Cloudflare Workers, a container behind any HTTP gateway \\
+Edge / CDN path & CloudFront \texttt{/api/*} & Cloudflare, Fastly, or a reverse proxy in front of the site \\
+Private object store & S3 (private prefix) & Google Cloud Storage, Azure Blob, MinIO \\
+Secrets / kill switch & SSM Parameter Store & Secret Manager, Key Vault, Vault, environment configuration \\
+Transactional mail & SES & SendGrid, Postmark, Mailgun, SMTP relay \\
+Bot check & Cloudflare Turnstile & reCAPTCHA, hCaptcha, honeypot only \\
+Coding agent & hosted coding-agent routine & GitHub Copilot coding agent, OpenHands, Aider or SWE-agent in a scheduled job, any agent that can open a pull request \\
+Infrastructure as code & Terraform & OpenTofu, Pulumi, CloudFormation, Bicep \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}[
+  font=\scriptsize, node distance=4mm and 6mm,
+  box/.style={draw, rounded corners=1pt, minimum height=7mm, minimum width=20mm, inner sep=2pt, align=center},
+  ext/.style={box, fill=black!5}, ours/.style={box, fill=blue!8}, store/.style={box, fill=green!8}, agent/.style={box, fill=orange!12},
+  arr/.style={-{Latex[length=1.6mm]}}, loop/.style={arr, dashed}, ag/.style={arr, dotted, thick}]
+  \node[ours] (widget) {Widget\\edge tab, 4\,KB};
+  \node[ext, below=of widget] (page) {\texttt{/feedback/}\\no-JS form $\cdot$ status};
+  \node[ext, right=of widget] (cdn) {CDN \texttt{/api/*}\\$\to$ API gateway};
+  \node[ours, right=of cdn] (fn) {Function\\validate $\cdot$ guards\\capture $\cdot$ status};
+  \node[store, right=8mm of fn] (tracker) {\textbf{Issue tracker}\\system of record\\route $\cdot$ respond $\cdot$ close};
+  \node[agent, above=5mm of tracker] (agentn) {Scheduled coding agent\\PR / proposal / execute};
+  \node[store, below=of tracker] (s3) {Private object store\\sidecar \{e-mail\}\\idempotency $\cdot$ screenshots};
+  \node[ext, below=of s3] (mail) {Mail API\\ack $\cdot$ alert $\cdot$ close};
+  \node[ext, dashed, below=5mm of agentn, xshift=26mm, minimum width=14mm] (repo) {Site repo\\(PRs)};
+  \draw[arr] (widget) -- (cdn); \draw[arr] (page) -| ($(cdn.south)+(-3mm,0)$); \draw[arr] (cdn) -- (fn);
+  \draw[arr] (fn) -- (tracker); \draw[arr] (fn) |- (s3); \draw[arr] (fn) |- (mail);
+  \draw[loop] (tracker.north west) to[bend right=20] node[above, font=\tiny, sloped]{webhook: closed} ($(fn.north east)+(0,-1mm)$);
+  \draw[ag] (agentn) -- (tracker);
+  \draw[ag] (agentn.east) -| (repo.north);
+\end{tikzpicture}}
+\caption{Reference architecture. Solid: capture path; dashed: loop closure; dotted: agentic Respond stage. Blue: built for \ffrs; green: stores (the tracker is the system of record); grey: existing platform services.}
+\label{fig:arch}
+\end{figure}
+
+\subsection{Capture surface}
+A framework-free widget (one script tag, configured by data attributes) renders an edge tab on every page. It offers ``request a feature'' and ``report a bug'', captures the page URL and---for bugs---a client-side screenshot, and takes an optional e-mail with an explicit consent checkbox. A plain HTML form at \texttt{/feedback/} is the no-JavaScript fallback and the landing page for status links.
+
+\subsection{Tracker as system of record}
+The function validates the submission, applies guards (honeypot, per-address rate limit, a bot check), stores the screenshot in a private object store, and creates the issue synchronously with labels \texttt{kind:*}, \texttt{severity:*} and a hidden marker carrying the reference id. Only then does it return \texttt{202 \{ref\}}. If the tracker is unavailable the caller receives an honest \texttt{502} and the widget retries with the same idempotency key---nothing is half-stored. Route therefore coincides with Capture; Respond and Close are read from the tracker itself (first human comment, close event, \texttt{outcome:*} labels or close reason).
+
+\subsection{Sidecar for personal data}
+The only personal datum, the requester's e-mail, never enters the public record. A per-item JSON object in a private object-store prefix holds \{e-mail, consent, screenshot key, ack sent, closing mail sent\}. Deleting that object forgets the person; screenshots and idempotency keys expire automatically.
+
+\subsection{Loop closure}
+A tracker webhook fires on close; the function derives the outcome (\texttt{outcome:*} label $\succ$ close reason $\succ$ kind default) and sends the closing note. Comments and close time need no webhook---the tracker already records them.
+
+\subsection{Agentic Respond stage}
+A scheduled cloud agent runs against the tracker. For each open item without a first response, it either opens a pull request on the target repository (code path) or posts a proposal comment (proposal path). Acceptance and confirmation are ordinary comments matching a small command grammar (\texttt{/accept}, \texttt{/confirm}, \texttt{/reject <reason>}) by the requester and by a maintainer respectively; the agent executes a proposal only after a maintainer's confirmation (a requester without a tracker account cannot accept; the maintainer then acts for both). In the reference deployment the agent is a hosted coding-agent routine that runs hourly with the site and tracker repositories checked out and the host's tracker tools available (Sec.~\ref{sec:impl}); any coding agent that can read the tracker, run the project's tests and open a pull request fits the role. Its instructions are a versioned prompt of about 700 words that fixes the selection rule (open items with a kind label and no prior response, oldest first, at most three per run), the two paths, the label protocol, a 15-minute budget with at most five minutes on test infrastructure, and the rules \emph{never push to main, never force-push, one branch per item, clean up temporary files}. ``Execute'' for a static site means a pull request (content or code) or a drafted reply; the agent has no other write path. Its tracker identity is the maintainer's, so agent comments carry a fixed marker and are excluded from the human metrics. A self-hosted CI-runner variant with the same protocol is kept as an alternative.
+\subsection{Security and threat model}
+An agent reading untrusted input from the public internet and executing code changes introduces the risk of indirect prompt injection. A malicious requester could embed instructions in the feedback description attempting to exfiltrate repository secrets or push harmful code. \ffrs{} mitigates this structurally: the agent runs in a heavily restricted sandbox with read-only access to the primary repository, and is only permitted to push branches to a constrained \texttt{ffrs/*} namespace. The environment contains no production secrets. Furthermore, the mandatory human-in-the-loop checkpoint ensures that even if an injection attack successfully commands the agent to generate a malicious payload, it cannot be merged into the mainline without maintainer review.
+
+
+\subsection{Operability and audit trail}
+Every layer is declared in version control and changed only through it: the site and widget are built from a repository, the function is a versioned bundle, the cloud resources are infrastructure-as-code, and the agent's protocol and prompt are files in the same repositories. Infrastructure changes go through \texttt{plan}/\texttt{apply} from a reviewed commit; content and code changes---including every change the agent proposes---arrive as pull requests. Consequently the audit trail for any question (\emph{who changed what, when, and why; which items the agent touched; what a reviewer approved}) is the commit and pull-request history plus the public tracker, with no separate audit store to maintain. Three switches make \ffrs{} detachable: a build-time flag (ships zero widget bytes), a runtime kill switch in the parameter store (\texttt{503} within a minute, no deploy), and an infrastructure flag that removes every resource; each is itself a committed change. Secrets are read at cold start from the parameter store and never appear in infrastructure state or in the repositories.

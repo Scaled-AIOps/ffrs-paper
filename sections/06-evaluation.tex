@@ -1,0 +1,56 @@
+\section{Evaluation}\label{sec:eval}
+\subsection{Setting}
+Two deployments are studied. \textbf{S1} is the reference deployment on scaledaiops.org described in Secs.~\ref{sec:arch}--\ref{sec:impl}, in production since 18~August~2026 (T0); every item, comment, label and pull request is public. \textbf{S2} is an independent commercial site in the consumer-services domain that implemented and tested a comparable capture widget with a conventional, manual response process; it contributes anonymised aggregate data only---capture volume, item kinds and a time-to-close proxy derived from status changes---and, having no first-response timestamp, cannot report TTFR. S2 therefore serves as a comparison point for capture volume and closure, not for the agentic stage.
+\subsection{Protocol}
+The protocol was fixed in the project's case-study document before data collection: a 12-week window from T0 with an interim read-out at week~4; per-kind, per-ISO-week metrics as defined in Sec.~\ref{sec:model}; targets stated in advance---TTFR under two hours (the agent's schedule), TTHR under 72~h at the median, TTC for bugs under 30 days at the median, closing notification for 100\,\% of consented closed items---and signal ratio and agent share reported without a target. The source of truth is the public tracker read by the published \texttt{metrics}/\texttt{export} commands; the resulting CSVs are committed with their export date. Items filed by the maintainer to test the system are labelled \texttt{spam} in the tracker and excluded.
+\subsection{Results at week 4}
+Table~\ref{tab:metrics} will report the interim metrics for S1 against the pre-registered targets, alongside the S2 baseline; the values are filled from the committed week-4 export (\todo{2026-09-15}) and are deliberately blank until then.
+
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{Interim evaluation metrics (week 4). Targets are pre-registered; S2 has no first-response timestamp.}
+\label{tab:metrics}
+\begin{tabular}{@{}l@{\hspace{0.75em}}l@{\hspace{0.75em}}r@{\hspace{0.75em}}r@{\hspace{0.75em}}r@{}}
+\toprule
+Metric & Target & S1 (bugs) & S1 (features) & S2 (all) \\
+\midrule
+$n$ (signal) & --- & \todo{} & \todo{} & \todo{} \\
+TTFR (p50 / p90) & $<2$\,h & \todo{} & \todo{} & n/a \\
+TTHR (p50) & $<72$\,h & \todo{} & \todo{} & n/a \\
+TTC (p50) & $<30$\,d (bugs) & \todo{} & \todo{} & \todo{} \\
+Loop closure & --- & \todo{} & \todo{} & \todo{} \\
+Consented notification & 100\,\% & \todo{} & \todo{} & n/a \\
+Signal ratio & --- & \todo{} & \todo{} & \todo{} \\
+Agent share & --- & \todo{} & \todo{} & 0\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{First item (T0)} The first genuine item on S1 was a feature request about the feedback widget's own placeholder text, filed anonymously through the widget. Table~\ref{tab:timeline} details the end-to-end timeline.
+
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{Timeline of the first production request (T0).}
+\label{tab:timeline}
+\begin{tabular}{@{}r>{\raggedright\arraybackslash}p{6.5cm}@{}}
+\toprule
+Time & Event \\
+\midrule
+\texttt{T+0:00} & Item captured via widget (feature request). \\
+\texttt{T+1:10} & First agent run starts (the routine was created that hour); by \texttt{T+1:19} it has a correct fix but cannot push---the agent's tracker identity lacked write permission on the organisation; it reports this precisely and stops. \\
+\texttt{T+1:21} & Maintainer grants the permission. \\
+\texttt{T+1:55} & Second agent run opens a pull request with the fix and its test results. \\
+\texttt{T+2:02} & Maintainer reviews the one-line diff and merges within a minute; the item closes automatically with outcome \emph{shipped}. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This sequence yielded a TTFR, TTHR, and TTC of approximately 2 hours, with an agent share of 100\,\%. Operating cost (RQ1) will be reported from the actual cloud bill at week~4; the agent runs within a subscription and has no per-item API charge.
+
+\subsection{Ablation (RQ3)}
+The dependency-minimal architecture is the result of removing components from an earlier design; we argue for the load-bearing role of what remains:
+\begin{itemize}
+    \item \textbf{Issue tracker vs.\ dedicated database:} the initial design had a relational store and an outbox. Removing them simplified the system and moved durability to the tracker; the trade-off is synchronous coupling---if the tracker is down, capture fails with an explicit \texttt{502} and the client retries safely with its idempotency key.
+    \item \textbf{Sidecar vs.\ public personal data:} the private sidecar isolates e-mail addresses and screenshots; without it a public tracker could not be the system of record.
+    \item \textbf{Bot check and honeypot:} protect the signal ratio by rejecting automated submissions before an issue is created; the counts of rejected and spam-labelled items are reported at week~4.
+\end{itemize}
