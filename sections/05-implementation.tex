@@ -7,7 +7,7 @@ Table~\ref{tab:impl} summarises the reference implementation---one instantiation
 \label{tab:impl}
 \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{5.4cm}@{}}
 \toprule
-API (\texttt{ffrs-api}) & Node~22 Lambda, TypeScript strict, Zod at every boundary; 24 files, $\approx$900 LOC, 33 tests (in-memory tracker/store twins, no network); 415\,KB bundle \\
+API (\texttt{ffrs-api}) & Node~22 Lambda, TypeScript strict, Zod at every boundary; 24 files, $\approx$900 LOC, 34 tests (in-memory tracker/store twins, no network); 416\,KB bundle \\
 Widget & 10.9\,KB (4.1\,KB gz) + 5.8\,KB CSS; no framework; screenshot library loaded on click \\
 Infrastructure & Terraform module, 19 resources (function, API gateway, private bucket, mail identity, weekly rule, CDN behaviour); \texttt{enable\_ffrs=false} plan is a verified no-op \\
 Store & GitHub issue + one JSON sidecar per item; 0 tables \\
