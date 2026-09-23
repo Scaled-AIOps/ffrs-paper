@@ -1,4 +1,4 @@
-% TODO before submission: re-check pages and editions of every entry against the publisher record.
+% Verified 2026-09-23 against Crossref / arXiv; DOIs given where they exist. Books and the ITIL edition are cited by edition.
 @book{forsgren2018accelerate,
   author    = {Nicole Forsgren and Jez Humble and Gene Kim},
   title     = {Accelerate: The Science of Lean Software and DevOps},
@@ -14,67 +14,84 @@
 @inproceedings{bissyande2013gotissues,
   author    = {Tegawend{\'e} F. Bissyand{\'e} and David Lo and Lingxiao Jiang and Laurent R{\'e}veill{\`e}re and Jacques Klein and Yves {Le Traon}},
   title     = {Got Issues? {Who} Cares About It? {A} Large Scale Investigation of Issue Trackers from {GitHub}},
-  booktitle = {Proc.\ IEEE Int.\ Symp.\ Software Reliability Engineering (ISSRE)},
-  year      = {2013}
+  booktitle = {Proc.\ IEEE 24th Int.\ Symp.\ Software Reliability Engineering (ISSRE)},
+  pages     = {188--197},
+  year      = {2013},
+  doi       = {10.1109/ISSRE.2013.6698918}
 }
 @inproceedings{kalliamvakou2014promises,
   author    = {Eirini Kalliamvakou and Georgios Gousios and Kelly Blincoe and Leif Singer and Daniel M. German and Daniela Damian},
   title     = {The Promises and Perils of Mining {GitHub}},
-  booktitle = {Proc.\ Working Conf.\ Mining Software Repositories (MSR)},
-  year      = {2014}
+  booktitle = {Proc.\ 11th Working Conf.\ Mining Software Repositories (MSR)},
+  pages     = {92--101},
+  year      = {2014},
+  doi       = {10.1145/2597073.2597074}
 }
 @inproceedings{tsay2014letstalk,
   author    = {Jason Tsay and Laura Dabbish and James Herbsleb},
   title     = {Let's Talk About It: Evaluating Contributions Through Discussion in {GitHub}},
-  booktitle = {Proc.\ ACM SIGSOFT Int.\ Symp.\ Foundations of Software Engineering (FSE)},
-  year      = {2014}
+  booktitle = {Proc.\ 22nd ACM SIGSOFT Int.\ Symp.\ Foundations of Software Engineering (FSE)},
+  pages     = {144--154},
+  year      = {2014},
+  doi       = {10.1145/2635868.2635882}
 }
 @inproceedings{gousios2014exploratory,
   author    = {Georgios Gousios and Martin Pinzger and Arie van Deursen},
   title     = {An Exploratory Study of the Pull-Based Software Development Model},
   booktitle = {Proc.\ 36th Int.\ Conf.\ Software Engineering (ICSE)},
   pages     = {345--355},
-  year      = {2014}
+  year      = {2014},
+  doi       = {10.1145/2568225.2568260}
 }
 @inproceedings{jimenez2024swebench,
   author    = {Carlos E. Jimenez and John Yang and Alexander Wettig and Shunyu Yao and Kexin Pei and Ofir Press and Karthik R. Narasimhan},
   title     = {{SWE-bench}: Can Language Models Resolve Real-World {GitHub} Issues?},
   booktitle = {Proc.\ 12th Int.\ Conf.\ Learning Representations (ICLR)},
-  year      = {2024}
+  year      = {2024},
+  note      = {arXiv:2310.06770}
 }
 @inproceedings{yang2024sweagent,
   author    = {John Yang and Carlos E. Jimenez and Alexander Wettig and Kilian Lieret and Shunyu Yao and Karthik R. Narasimhan and Ofir Press},
   title     = {{SWE-agent}: Agent-Computer Interfaces Enable Automated Software Engineering},
   booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  year      = {2024}
+  volume    = {37},
+  year      = {2024},
+  note      = {arXiv:2405.15793}
 }
-
-@misc{xia2024agentless,
-  author        = {Chunqiu Steven Xia and Yinlin Deng and Soren Dunn and Lingming Zhang},
-  title         = {Agentless: Demystifying {LLM}-based Software Engineering Agents},
-  year          = {2024},
-  eprint        = {2407.01489},
-  archivePrefix = {arXiv}
+@article{xia2024agentless,
+  author    = {Chunqiu Steven Xia and Yinlin Deng and Soren Dunn and Lingming Zhang},
+  title     = {Demystifying {LLM}-Based Software Engineering Agents},
+  journal   = {Proc.\ ACM on Software Engineering},
+  volume    = {2},
+  number    = {FSE},
+  pages     = {801--824},
+  year      = {2025},
+  doi       = {10.1145/3715754},
+  note      = {Introduces Agentless; arXiv:2407.01489}
 }
-@misc{qian2023chatdev,
-  author        = {Chen Qian and Xin Cong and Cheng Yang and Weize Chen and Yusheng Su and Juyong Jiang and Zhiyuan Liu and Xuanjing Huang and Maosong Sun},
-  title         = {{ChatDev}: Communicative Agents for Software Development},
-  year          = {2023},
-  eprint        = {2307.07924},
-  archivePrefix = {arXiv}
+@inproceedings{qian2023chatdev,
+  author    = {Chen Qian and Wei Liu and Hongzhang Liu and Nuo Chen and Yufan Dang and Jiahao Li and Cheng Yang and Weize Chen and Yusheng Su and Xin Cong and Juyuan Xu and Dahai Li and Zhiyuan Liu and Maosong Sun},
+  title     = {{ChatDev}: Communicative Agents for Software Development},
+  booktitle = {Proc.\ 62nd Annual Meeting of the Association for Computational Linguistics (ACL)},
+  pages     = {15174--15186},
+  year      = {2024},
+  doi       = {10.18653/v1/2024.acl-long.810}
 }
-@misc{bouzenia2024repairagent,
-  author        = {Islem Bouzenia and Premkumar Devanbu and Michael Pradel},
-  title         = {{RepairAgent}: An Autonomous, {LLM}-Based Agent for Program Repair},
-  year          = {2024},
-  eprint        = {2403.17134},
-  archivePrefix = {arXiv}
+@inproceedings{bouzenia2024repairagent,
+  author    = {Islem Bouzenia and Premkumar Devanbu and Michael Pradel},
+  title     = {{RepairAgent}: An Autonomous, {LLM}-Based Agent for Program Repair},
+  booktitle = {Proc.\ IEEE/ACM 47th Int.\ Conf.\ Software Engineering (ICSE)},
+  pages     = {2188--2200},
+  year      = {2025},
+  doi       = {10.1109/ICSE55347.2025.00157}
 }
 @inproceedings{coelho2017why,
   author    = {Jailton Coelho and Marco Tulio Valente},
   title     = {Why Modern Open Source Projects Fail},
   booktitle = {Proc.\ 11th Joint Meeting on Foundations of Software Engineering (ESEC/FSE)},
-  year      = {2017}
+  pages     = {186--196},
+  year      = {2017},
+  doi       = {10.1145/3106237.3106246}
 }
 @article{forsgren2021space,
   author    = {Nicole Forsgren and Margaret-Anne Storey and Chandra Maddila and Thomas Zimmermann and Brian Houck and Jenna Butler},
@@ -83,23 +100,30 @@
   volume    = {19},
   number    = {1},
   pages     = {20--48},
-  year      = {2021}
+  year      = {2021},
+  doi       = {10.1145/3454122.3454124}
 }
 @inproceedings{panichella2015how,
   author    = {Sebastiano Panichella and Andrea Di Sorbo and Emitza Guzman and Corrado A. Visaggio and Gerardo Canfora and Harald C. Gall},
-  title     = {How can I improve my app? {Classifying} user reviews for software maintenance and evolution},
+  title     = {How Can {I} Improve My App? {Classifying} User Reviews for Software Maintenance and Evolution},
   booktitle = {Proc.\ IEEE Int.\ Conf.\ Software Maintenance and Evolution (ICSME)},
-  year      = {2015}
+  pages     = {281--290},
+  year      = {2015},
+  doi       = {10.1109/ICSM.2015.7332474}
 }
 @inproceedings{guzman2014how,
   author    = {Emitza Guzman and Walid Maalej},
   title     = {How Do Users Like This Feature? {A} Fine Grained Sentiment Analysis of App Reviews},
   booktitle = {Proc.\ IEEE 22nd Int.\ Requirements Engineering Conf.\ (RE)},
-  year      = {2014}
+  pages     = {153--162},
+  year      = {2014},
+  doi       = {10.1109/RE.2014.6912257}
 }
 @inproceedings{johann2017safe,
   author    = {Timo Johann and Christoph Stanik and Alireza M. {Alizadeh B.} and Walid Maalej},
-  title     = {{SAFE}: A simple approach for feature extraction from app descriptions and app reviews},
+  title     = {{SAFE}: A Simple Approach for Feature Extraction from App Descriptions and App Reviews},
   booktitle = {Proc.\ IEEE 25th Int.\ Requirements Engineering Conf.\ (RE)},
-  year      = {2017}
+  pages     = {21--30},
+  year      = {2017},
+  doi       = {10.1109/RE.2017.71}
 }
