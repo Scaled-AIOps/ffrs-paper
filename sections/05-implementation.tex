@@ -3,14 +3,14 @@ Table~\ref{tab:impl} summarises the reference implementation---one instantiation
 
 \begin{table}[t]
 \centering\footnotesize
-\caption{Reference implementation (2026-08-18).}
+\caption{Reference implementation at T0 (2026-09-23).}
 \label{tab:impl}
 \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{5.4cm}@{}}
 \toprule
-API (\texttt{ffrs-api}) & Node~22 Lambda, TypeScript strict, Zod at every boundary; 24 files, $\approx$900 LOC, 34 tests (in-memory tracker/store twins, no network); 416\,KB bundle \\
-Widget & 10.9\,KB (4.1\,KB gz) + 5.8\,KB CSS; no framework; screenshot library loaded on click \\
-Infrastructure & Terraform module, 19 resources (function, API gateway, private bucket, mail identity, weekly rule, CDN behaviour); \texttt{enable\_ffrs=false} plan is a verified no-op \\
-Store & GitHub issue + one JSON sidecar per item; 0 tables \\
+API (\texttt{ffrs-api}) & Node~22 Lambda, TypeScript strict, Zod at every boundary; 26 files, $\approx$1{,}100 LOC, 44 tests (in-memory tracker/store twins, no network); 476\,KB bundle \\
+Widget & 12.3\,KB (4.9\,KB gz), styles included; shadow DOM, no framework; screenshot library loaded on demand \\
+Infrastructure & Terraform module, 23 resources (function and function URL, CDN distribution, asset and private buckets, mail identity, weekly rule) \\
+Store & GitHub issue + one JSON sidecar per item; 0 tables; tenants in the parameter store \\
 Agent & hosted coding-agent routine, hourly; $\approx$850-word versioned prompt (\texttt{agent/routine-prompt.md}) \\
 Build effort & $\approx$1 working day across 8 phases (commit timeline in the repositories) \\
 Run cost & within AWS free tier at the reference volume \todo{confirm after 4 weeks} \\
@@ -22,10 +22,12 @@ Run cost & within AWS free tier at the reference volume \todo{confirm after 4 we
 
 \paragraph{Embedding contract} A site adopts \ffrs{} with one tag:
 \begin{lstlisting}
-<script src="/assets/js/ffrs-widget.js"
-  data-endpoint="/api/feedback" data-site="example.org"
-  data-turnstile="<sitekey>" data-screenshot="bug" defer></script>
+<script src="https://<service-host>/widget.js"
+  data-site="example" data-turnstile="<sitekey>"
+  data-screenshot="bug" defer></script>
 \end{lstlisting}
-and a function deployment configured by environment variables (tracker repository, mail sender, bucket). Everything site-specific is an attribute or a variable.
+and a tenant entry (tracker repository and token, allowed origins, optional secrets). Everything site-specific is an attribute or a tenant setting; nothing is deployed per site.
 
-\paragraph{Reproducing the metrics} \texttt{npm run metrics} and \texttt{npm run export} in \texttt{ffrs-api} read the public tracker and emit per-week metrics and anonymised per-item rows (no body, e-mail or screenshot). The CSVs used in Sec.~\ref{sec:eval} are committed under \texttt{data/} in the paper repository.
+\paragraph{Research export} Each week the function files a metrics report in every tenant's tracker and, for tenants that opted in, writes one item-level row per item filed since T0 to the private store: a site pseudonym, kind, severity, outcome, agent path and the stage timestamps---never text, contact or links. The S2 figures in Sec.~\ref{sec:eval} are computed from these rows.
+
+\paragraph{Reproducing the metrics} \texttt{npm run metrics} and \texttt{npm run export} in \texttt{ffrs-api} read a tracker and emit per-week metrics and anonymised per-item rows (no body, e-mail or screenshot) for items filed since T0. The CSVs used in Sec.~\ref{sec:eval} are committed under \texttt{data/} in the paper repository.
